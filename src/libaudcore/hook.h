@@ -1,6 +1,6 @@
 /*
  * hook.h
- * Copyright 2011 John Lindgren
+ * Copyright 2011-2014 John Lindgren
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -20,6 +20,8 @@
 #ifndef LIBAUDCORE_HOOK_H
 #define LIBAUDCORE_HOOK_H
 
+#include <libaudcore/templates.h>
+
 typedef void (* HookFunction) (void * data, void * user);
 
 /* Adds <func> to the list of functions to be called when the hook <name> is
@@ -27,27 +29,87 @@ typedef void (* HookFunction) (void * data, void * user);
 void hook_associate (const char * name, HookFunction func, void * user);
 
 /* Removes all instances matching <func> and <user> from the list of functions
- * to be called when the hook <name> is triggered.  If <user> is NULL, all
+ * to be called when the hook <name> is triggered.  If <user> is nullptr, all
  * instances matching <func> are removed. */
-void hook_dissociate_full (const char * name, HookFunction func, void * user);
-
-#define hook_dissociate(n, f) hook_dissociate_full (n, f, NULL)
+void hook_dissociate (const char * name, HookFunction func, void * user = nullptr);
 
 /* Triggers the hook <name>. */
 void hook_call (const char * name, void * data);
 
+typedef void (* EventDestroyFunc) (void * data);
+
 /* Schedules a call of the hook <name> from the program's main loop, to be
- * executed in <time> milliseconds.  If <destroy> is not NULL, it will be called
+ * executed in <time> milliseconds.  If <destroy> is not nullptr, it will be called
  * on <data> after the hook is called. */
-void event_queue_full (int time, const char * name, void * data, void (* destroy) (void *));
+void event_queue (const char * name, void * data, EventDestroyFunc destroy = nullptr);
 
-#define event_queue(n, d) event_queue_full (0, n, d, NULL)
-
-/* Cancels pending hook calls matching <name> and <data>.  If <data> is NULL,
+/* Cancels pending hook calls matching <name> and <data>.  If <data> is nullptr,
  * all hook calls matching <name> are canceled. */
 void event_queue_cancel (const char * name, void * data);
 
-/* Cancels all pending hook calls. */
-void event_queue_cancel_all (void);
+/* Convenience wrapper for C++ classes.  Allows non-static member functions to
+ * be used as hook callbacks.  The HookReceiver should be made a member of the
+ * class in question so that hook_dissociate() is called automatically from the
+ * destructor. */
+template<class T, class D = void>
+class HookReceiver
+{
+public:
+    HookReceiver (const char * hook, T * target, void (T::* func) (D)) :
+        hook (hook),
+        target (target),
+        func (func)
+    {
+        hook_associate (hook, run, this);
+    }
+
+    ~HookReceiver ()
+        { hook_dissociate (hook, run, this); }
+
+    HookReceiver (const HookReceiver &) = delete;
+    void operator= (const HookReceiver &) = delete;
+
+private:
+    const char * const hook;
+    T * const target;
+    void (T::* const func) (D);
+
+    static void run (void * d, void * recv_)
+    {
+        auto recv = (HookReceiver *) recv_;
+        (recv->target->* recv->func) (aud::from_ptr<D> (d));
+    }
+};
+
+/* Partial specialization for data-less hooks. */
+template<class T>
+class HookReceiver<T, void>
+{
+public:
+    HookReceiver (const char * hook, T * target, void (T::* func) ()) :
+        hook (hook),
+        target (target),
+        func (func)
+    {
+        hook_associate (hook, run, this);
+    }
+
+    ~HookReceiver ()
+        { hook_dissociate (hook, run, this); }
+
+    HookReceiver (const HookReceiver &) = delete;
+    void operator= (const HookReceiver &) = delete;
+
+private:
+    const char * const hook;
+    T * const target;
+    void (T::* const func) ();
+
+    static void run (void *, void * recv_)
+    {
+        auto recv = (HookReceiver *) recv_;
+        (recv->target->* recv->func) ();
+    }
+};
 
 #endif /* LIBAUDCORE_HOOK_H */

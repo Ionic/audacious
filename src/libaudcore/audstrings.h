@@ -21,107 +21,84 @@
 #define LIBAUDCORE_STRINGS_H
 
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
+#include <stdint.h>
 
-#include <libaudcore/core.h>
+#include <initializer_list>
 
-#define SPRINTF(s, ...) \
- char s[snprintf (NULL, 0, __VA_ARGS__) + 1]; \
- snprintf (s, sizeof s, __VA_ARGS__)
+#include <libaudcore/index.h>
+#include <libaudcore/objects.h>
 
-#define VSPRINTF(s, f, v) \
- va_list v##2; \
- va_copy (v##2, v); \
- char s[vsnprintf (NULL, 0, f, v##2) + 1]; \
- va_end (v##2); \
- vsnprintf (s, sizeof s, f, v)
+int strcmp_safe (const char * a, const char * b, int len = -1);
+int strcmp_nocase (const char * a, const char * b, int len = -1);
+int strlen_bounded (const char * s, int len = -1);
 
-#define SCOPY(s, a) \
- char s[strlen (a) + 1]; \
- strcpy (s, a)
+StringBuf str_copy (const char * s, int len = -1);
+StringBuf str_concat (const std::initializer_list<const char *> & strings);
+StringBuf str_printf (const char * format, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+StringBuf str_vprintf (const char * format, va_list args);
 
-#define SNCOPY(s, a, x) \
- char s[(x) + 1]; \
- strncpy (s, a, sizeof s - 1); \
- s[sizeof s - 1] = 0
+bool str_has_prefix_nocase (const char * str, const char * prefix);
+bool str_has_suffix_nocase (const char * str, const char * suffix);
 
-#define SCONCAT2(s, a, b) \
- int s##_1 = strlen (a), s##_2 = strlen (b); \
- char s[s##_1 + s##_2 + 1]; \
- memcpy (s, (a), s##_1); \
- strcpy (s + s##_1, (b))
+unsigned str_calc_hash (const char * str);
 
-#define SCONCAT3(s, a, b, c) \
- int s##_1 = strlen (a), s##_2 = strlen (b), s##_3 = strlen (c); \
- char s[s##_1 + s##_2 + s##_3 + 1]; \
- memcpy (s, (a), s##_1); \
- memcpy (s + s##_1, (b), s##_2); \
- strcpy (s + s##_1 + s##_2, (c))
+const char * strstr_nocase (const char * haystack, const char * needle);
+const char * strstr_nocase_utf8 (const char * haystack, const char * needle);
 
-#define SCONCAT4(s, a, b, c, d) \
- int s##_1 = strlen (a), s##_2 = strlen (b), s##_3 = strlen (c), s##_4 = strlen (d); \
- char s[s##_1 + s##_2 + s##_3 + s##_4 + 1]; \
- memcpy (s, (a), s##_1); \
- memcpy (s + s##_1, (b), s##_2); \
- memcpy (s + s##_1 + s##_2, (c), s##_3); \
- strcpy (s + s##_1 + s##_2 + s##_3, (d))
+static inline char * strstr_nocase (char * haystack, const char * needle)
+    { return (char *) strstr_nocase ((const char *) haystack, needle); }
+static inline char * strstr_nocase_utf8 (char * haystack, const char * needle)
+    { return (char *) strstr_nocase_utf8 ((const char *) haystack, needle); }
 
-struct _Index;
-
-/* all (char *) return values must be freed with str_unref() */
-
-char * str_printf (const char * format, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-char * str_vprintf (const char * format, va_list args);
-
-bool_t str_has_prefix_nocase(const char * str, const char * prefix);
-bool_t str_has_suffix_nocase(const char * str, const char * suffix);
-
-char * strstr_nocase (const char * haystack, const char * needle);
-char * strstr_nocase_utf8 (const char * haystack, const char * needle);
-
-char * str_tolower_utf8 (const char * str);
+StringBuf str_tolower (const char * str);
+StringBuf str_tolower_utf8 (const char * str);
 
 void str_replace_char (char * string, char old_c, char new_c);
 
-void str_itoa (int x, char * buf, int bufsize);
+StringBuf str_decode_percent (const char * str, int len = -1);
+StringBuf str_encode_percent (const char * str, int len = -1);
 
-void str_decode_percent (const char * str, int len, char * out);
-void str_encode_percent (const char * str, int len, char * out);
+StringBuf str_convert (const char * str, int len, const char * from_charset, const char * to_charset);
+StringBuf str_from_locale (const char * str, int len = -1);
+StringBuf str_to_locale (const char * str, int len = -1);
 
-char * str_convert (const char * str, int len, const char * from_charset, const char * to_charset);
-char * str_from_locale (const char * str, int len);
-char * str_to_locale (const char * str, int len);
-char * str_to_utf8 (const char * str, int len);
+/* Requires: aud_init() */
+StringBuf str_to_utf8 (const char * str, int len); // no "len = -1" to avoid ambiguity
+StringBuf str_to_utf8 (StringBuf && str);
 
-/* takes ownership of <fallbacks> and the pooled strings in it */
-void str_set_charsets (const char * region, struct _Index * fallbacks);
+StringBuf filename_normalize (StringBuf && filename);
 
-void filename_normalize (char * filename);
-
-char * filename_build (const char * path, const char * name);
-char * filename_to_uri (const char * filename);
-char * uri_to_filename (const char * uri);
-char * uri_to_display (const char * uri);
+StringBuf filename_build (const std::initializer_list<const char *> & elems);
+StringBuf filename_to_uri (const char * filename);
+StringBuf uri_to_filename (const char * uri, bool use_locale = true);
+StringBuf uri_to_display (const char * uri);
 
 void uri_parse (const char * uri, const char * * base_p, const char * * ext_p,
  const char * * sub_p, int * isub_p);
-bool_t uri_get_extension (const char * uri, char * buf, int buflen);
+
+StringBuf uri_get_scheme (const char * uri);
+StringBuf uri_get_extension (const char * uri);
+
+/* Requires: aud_init() */
+StringBuf uri_construct (const char * path, const char * reference);
 
 int str_compare (const char * a, const char * b);
 int str_compare_encoded (const char * a, const char * b);
 
-struct _Index * str_list_to_index (const char * list, const char * delims);
-char * index_to_str_list (struct _Index * index, const char * sep);
+Index<String> str_list_to_index (const char * list, const char * delims);
+StringBuf index_to_str_list (const Index<String> & index, const char * sep);
 
 int str_to_int (const char * string);
 double str_to_double (const char * string);
-char * int_to_str (int val);
-char * double_to_str (double val);
+StringBuf int_to_str (int val);
+StringBuf double_to_str (double val);
 
-bool_t str_to_int_array (const char * string, int * array, int count);
-char * int_array_to_str (const int * array, int count);
-bool_t str_to_double_array (const char * string, double * array, int count);
-char * double_array_to_str (const double * array, int count);
+bool str_to_int_array (const char * string, int * array, int count);
+StringBuf int_array_to_str (const int * array, int count);
+bool str_to_double_array (const char * string, double * array, int count);
+StringBuf double_array_to_str (const double * array, int count);
+
+/* Requires: aud_init() */
+StringBuf str_format_time (int64_t milliseconds);
 
 #endif /* LIBAUDCORE_STRINGS_H */

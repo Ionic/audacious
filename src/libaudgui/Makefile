@@ -1,27 +1,32 @@
 SHARED_LIB = ${LIB_PREFIX}audgui${LIB_SUFFIX}
-LIB_MAJOR = 2
+LIB_MAJOR = 3
 LIB_MINOR = 0
 
-SRCS = about.c \
-       confirm.c \
-       equalizer.c \
-       infopopup.c \
-       infowin.c \
-       init.c \
-       jump-to-time.c \
-       list.c \
-       menu.c \
-       pixbufs.c \
-       playlists.c \
-       queue-manager.c \
-       scaled-image.c \
-       ui_fileopener.c \
-       ui_jumptotrack.c \
-       ui_jumptotrack_cache.c \
-       ui_playlist_manager.c \
-       urilist.c \
-       url-opener.c \
-       util.c
+SRCS = about.cc \
+       confirm.cc \
+       equalizer.cc \
+       file-opener.cc \
+       infopopup.cc \
+       infowin.cc \
+       init.cc \
+       jump-to-time.cc \
+       jump-to-track.cc \
+       jump-to-track-cache.cc \
+       list.cc \
+       menu.cc \
+       pixbufs.cc \
+       playlists.cc \
+       plugin-menu.cc \
+       plugin-prefs.cc \
+       plugin-view.cc \
+       prefs-widget.cc \
+       prefs-window.cc \
+       queue-manager.cc \
+       scaled-image.cc \
+       status.cc \
+       urilist.cc \
+       url-opener.cc \
+       util.cc
 
 INCLUDES = libaudgui.h \
            libaudgui-gtk.h \
@@ -33,10 +38,13 @@ include ../../extra.mk
 
 includesubdir = libaudgui
 
+LD = ${CXX}
+
 CPPFLAGS := -I.. -I../.. \
             ${CPPFLAGS} \
-            ${GLIB_CFLASG} \
-            ${GTK_CFLAGS}
+            ${GLIB_CFLAGS} \
+            ${GTK_CFLAGS} \
+            ${LIBGUESS_CFLAGS}
 
 CFLAGS += ${LIB_CFLAGS}
 

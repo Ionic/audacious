@@ -20,10 +20,10 @@
 #ifndef LIBAUDCORE_VFS_ASYNC_H
 #define LIBAUDCORE_VFS_ASYNC_H
 
-#include <libaudcore/vfs.h>
+#include <libaudcore/index.h>
 
-typedef bool_t (*VFSConsumer)(void * buf, int64_t size, void * userdata);
+typedef void (* VFSConsumer) (const char * filename, const Index<char> & buf, void * user);
 
-void vfs_async_file_get_contents(const char *filename, VFSConsumer cons_f, void * userdata);
+void vfs_async_file_get_contents (const char * filename, VFSConsumer cons_f, void * user);
 
 #endif

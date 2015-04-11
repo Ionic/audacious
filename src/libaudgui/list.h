@@ -20,37 +20,39 @@
 #ifndef AUDGUI_LIST_H
 #define AUDGUI_LIST_H
 
+/* okay to use without audgui_init() */
+
 #include <gtk/gtk.h>
-#include <libaudcore/core.h>
+
+#include <libaudcore/index.h>
 
 /* New callbacks should be added to the end of this struct.  The
  * audgui_list_new() macro tells us the size of the callback struct as it was
  * defined when the caller code was compiled, allowing us to expand the struct
  * without breaking backward compatibility. */
 
-typedef struct {
+struct AudguiListCallbacks {
     void (* get_value) (void * user, int row, int column, GValue * value);
 
     /* selection (optional) */
-    bool_t (* get_selected) (void * user, int row);
-    void (* set_selected) (void * user, int row, bool_t selected);
-    void (* select_all) (void * user, bool_t selected);
+    bool (* get_selected) (void * user, int row);
+    void (* set_selected) (void * user, int row, bool selected);
+    void (* select_all) (void * user, bool selected);
 
     void (* activate_row) (void * user, int row); /* optional */
     void (* right_click) (void * user, GdkEventButton * event); /* optional */
     void (* shift_rows) (void * user, int row, int before); /* optional */
 
     /* cross-widget drag and drop (optional) */
-    /* the list will handle free()ing data returned by get_data() */
     const char * data_type;
-    void (* get_data) (void * user, void * * data, int * length);
-    void (* receive_data) (void * user, int row, const void * data, int length);
+    Index<char> (* get_data) (void * user);
+    void (* receive_data) (void * user, int row, const char * data, int len);
 
     void (* mouse_motion) (void * user, GdkEventMotion * event, int row); /* optional */
     void (* mouse_leave) (void * user, GdkEventMotion * event, int row); /* optional */
 
     void (* focus_change) (void * user, int row); /* optional */
-} AudguiListCallbacks;
+};
 
 GtkWidget * audgui_list_new_real (const AudguiListCallbacks * cbs, int cbs_size,
  void * user, int rows);

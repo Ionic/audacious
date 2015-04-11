@@ -5,11 +5,12 @@ dnl ***
 dnl Initialize
 dnl ==========
 AC_PREREQ([2.59])
-AC_INIT([audacious], [3.5.2])
-AC_COPYRIGHT([(C) 2005-2014 Audacious Team])
+AC_INIT([audacious], [3.6.1])
+AC_COPYRIGHT([Copyright (C) 2001-2015 Audacious developers and others])
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE_NAME", [Name of package])
 AC_DEFINE_UNQUOTED(VERSION, "$PACKAGE_VERSION", [Version number of package])
+AC_DEFINE_UNQUOTED(COPYRIGHT, "Copyright © 2001-2015 Audacious developers and others", [Copyright])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
@@ -21,30 +22,6 @@ BUILDSYS_SHARED_LIB
 AC_DEFINE_UNQUOTED(PLUGIN_SUFFIX, "$PLUGIN_SUFFIX", [Suffix for plugins])
 
 m4_ifdef([PKG_INSTALLDIR], [PKG_INSTALLDIR], AC_SUBST([pkgconfigdir], ${libdir}/pkgconfig))
-
-dnl Disable deprecation warnings
-dnl ============================
-CFLAGS="$CFLAGS -Wno-deprecated-declarations"
-
-dnl Byte order
-dnl ==========
-AC_C_BIGENDIAN([BIGENDIAN=1], [BIGENDIAN=0],
- [AC_MSG_ERROR([Unknown machine byte order])],
- [AC_MSG_ERROR([Universal builds are not supported, sorry])])
-AC_SUBST([BIGENDIAN])
-
-dnl Prevent symbol collisions
-dnl =========================
-if test "x$HAVE_MSWINDOWS" = "xyes" ; then
-    EXPORT="__declspec(dllexport)"
-elif test "x$GCC" = "xyes" ; then
-    CFLAGS="$CFLAGS -fvisibility=hidden"
-    CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
-    EXPORT="__attribute__((visibility(\"default\")))"
-else
-    AC_MSG_ERROR([Unknown syntax for EXPORT keyword])
-fi
-AC_DEFINE_UNQUOTED([EXPORT], [$EXPORT], [Define to compiler syntax for public symbols])
 
 dnl Headers and functions
 dnl ===============================
@@ -186,5 +163,7 @@ echo "  Install path:                           $prefix"
 echo ""
 echo "  Automatic character code detection:     $USE_CHARDET"
 echo "  D-Bus support:                          $USE_DBUS"
+echo "  GTK+ support:                           $USE_GTK"
+echo "  Qt support:                             $USE_QT"
 echo "  Valgrind analysis support:              $enable_valgrind"
 echo ""
