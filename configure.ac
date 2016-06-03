@@ -8,6 +8,8 @@ AC_PREREQ([2.59])
 AC_INIT([audacious], [3.7.2])
 AC_COPYRIGHT([Copyright (C) 2001-2016 Audacious developers and others])
 
+BUILDSYS_INIT
+
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE_NAME", [Name of package])
 AC_DEFINE_UNQUOTED(VERSION, "$PACKAGE_VERSION", [Version number of package])
 AC_DEFINE_UNQUOTED(COPYRIGHT, "Copyright © 2001-2016 Audacious developers and others", [Copyright])
